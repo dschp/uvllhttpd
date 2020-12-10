@@ -331,14 +331,8 @@ struct HttpResponse *uvllhttpd_response_init (uv_tcp_t *handle)
 {
    if (handle == NULL) return NULL;
 
-   struct HttpResponse *response = malloc (sizeof(struct HttpResponse));
+   struct HttpResponse *response = calloc (1, sizeof(struct HttpResponse));
    response->handle = handle;
-   response->status = 0;
-   response->headers.base = NULL;
-   response->headers.len = 0;
-   response->body.base = NULL;
-   response->body.len = 0;
-   response->_write_buffer = NULL;
 
    return response;
 }
@@ -368,8 +362,6 @@ static void write_cb (uv_write_t* req, int status)
 {
    struct HttpResponse *response = (struct HttpResponse *)req->data;
 
-   free (response->_write_buffer);
-
    if (response->headers.base != NULL) free (response->headers.base);
    if (response->body.base != NULL) free (response->body.base);
 
@@ -381,18 +373,18 @@ void uvllhttpd_response_finish (struct HttpResponse *response)
 {
    if (response == NULL) return;
 
-   char * const buffer = malloc (128);
+   size_t const buffer_size = 64;
+   uv_write_t *req = malloc (sizeof(uv_write_t) + buffer_size*2);
+   char * const buffer_base = (char *)req + sizeof(uv_write_t);
 
    uv_buf_t bufs[4];
-   bufs[0].base = buffer;
-   bufs[0].len = snprintf (buffer, 64, "HTTP/1.1 %d OK\r\n", response->status);
+   bufs[0].base = buffer_base;
+   bufs[0].len = snprintf (bufs[0].base, buffer_size, "HTTP/1.1 %d OK\r\n", response->status);
    bufs[1] = response->headers;
-   bufs[2].base = buffer + 64;
-   bufs[2].len = snprintf (bufs[2].base, 64, "Content-Length: %zd\r\n\r\n", response->body.len);
+   bufs[2].base = buffer_base + buffer_size;
+   bufs[2].len = snprintf (bufs[2].base, buffer_size, "Content-Length: %zd\r\n\r\n", response->body.len);
    bufs[3] = response->body;
 
-   uv_write_t *req = malloc (sizeof(uv_write_t));
    req->data = response;
-   response->_write_buffer = buffer;
    uv_write (req, (uv_stream_t *)response->handle, bufs, 4, write_cb);
 }

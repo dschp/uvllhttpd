@@ -51,8 +51,6 @@ struct HttpResponse {
    uint16_t status;
    uv_buf_t headers;
    uv_buf_t body;
-
-   char *_write_buffer;
 };
 
 struct HttpResponse *uvllhttpd_response_init (uv_tcp_t *handle);
