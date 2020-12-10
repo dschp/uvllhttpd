@@ -62,6 +62,7 @@ static void read_cb (uv_stream_t *handle, ssize_t nread, const uv_buf_t *buf)
 		{
 			fprintf (stderr, "Parse error: %s %s\n",
                llhttp_errno_name (err), client->parser.reason);
+         uv_close ((uv_handle_t*) client, close_cb);
 		}
 	}
 	else if (nread < 0)
