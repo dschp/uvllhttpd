@@ -15,3 +15,14 @@ this library just focuses on providing a simple and thin API.
 
 For unit testing
 - [cgreen](https://github.com/cgreen-devs/cgreen) (1.3.0)
+
+## Basics
+
+uvllhttpd just collects HTTP request data passed by llhttp, then calls your request handler with them.
+
+The passed HttpRequest is on the calling function's stack memory, so you don't have to release (free) them as long as you handle requests in the callback function.
+
+This is because I wanted to make it efficient and memory leak safe.
+
+But if you need to pass request handling to a worker process, you need to malloc and copy request data so that the worker can access, like in example.c.
+

@@ -46,7 +46,7 @@ void on_request2 (uv_tcp_t *handle, struct HttpRequest const *request)
 struct mywork {
    uv_work_t work;
    uv_tcp_t *handle;
-   char uri[100];
+   char *uri;
 };
 
 void work_cb (uv_work_t* work)
@@ -75,9 +75,11 @@ void on_request3 (uv_tcp_t *handle, struct HttpRequest const *request)
 {
    printf ("on_request3\n");
 
-   struct mywork *mw = malloc (sizeof(struct mywork));
+   struct mywork *mw = malloc (sizeof(struct mywork) + request->uri.len + 1);
    mw->handle = handle;
-   strncpy (mw->uri, request->uri.base, 100);
+   mw->uri = (char *) mw + sizeof(struct mywork);
+   strncpy (mw->uri, request->uri.base, request->uri.len);
+   mw->uri[request->uri.len] = '\0';
    
    assert (&(mw->work) == (uv_work_t *)mw);
    uv_queue_work (handle->loop, (uv_work_t *)mw, work_cb, after_work_cb);
